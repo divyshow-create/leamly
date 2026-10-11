@@ -25,6 +25,8 @@ export default async (req) => {
     ${row("Daily email", t.unsubscribed ? "unsubscribed" : (t.consentEmail ? "yes" : "no"))}${row("Usage sharing", t.consentAnalytics ? "yes" : "no")}
     ${row("Next lesson", esc(t.next?.key || "–") + (t.next?.title ? " — " + esc(t.next.title[t.lang] || t.next.title.en) : ""))}
     ${row("Why they use Leamly", esc(p.whyAnswered || "–"))}${row("Founding offer", esc(p.offerChosen || "not chosen"))}</table></div>
+    <h2>Lessons opened (${Object.keys(p.lessonHist || {}).length})</h2><div class=c><table><tr><th>Lesson</th><th>First opened</th><th>Opens</th><th>Reached page</th><th>Finished</th><th>Quiz</th><th>Difficulty</th><th>Length</th><th>Left because</th></tr>
+    ${Object.entries(p.lessonHist || {}).sort((a, b) => (a[1].first < b[1].first ? 1 : -1)).map(([k, h]) => `<tr><td>${esc(k)}</td><td>${esc(h.first || "–")}</td><td>${h.opens || 1}</td><td>${h.maxPg || 1}${h.of ? " / " + h.of : ""}</td><td>${h.finished ? "✓ " + esc(h.finishedOn || "") : "✗ no"}</td><td>${h.right != null ? h.right + "/3" : "–"}</td><td>${esc((h.feel || "–").replace("_", " "))}</td><td>${esc(h.len || "–")}</td><td>${esc((h.exit || "–").replace("_", " "))}</td></tr>`).join("") || "<tr><td colspan=9>No lessons opened yet</td></tr>"}</table></div>
     <h2>Daily lessons finished</h2><div class=c>${days}</div>
     <h2>Ideas collected (${(p.ideas || []).length})</h2><div class=c>${(p.ideas || []).map(i => `${esc(i.k)} · ${esc(i.date)}${i.remembered ? " · remembered" : ""}${i.deep ? " · deep note" : ""}`).join("<br>") || "–"}</div>
     <h2>Kept in orbit (${(p.kept || []).length})</h2><div class=c>${(p.kept || []).map(i => esc(i.id) + " · " + esc(i.date)).join("<br>") || "–"}</div>
