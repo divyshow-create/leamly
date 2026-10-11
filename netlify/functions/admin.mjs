@@ -57,11 +57,23 @@ export default async (req) => {
     (p.lenFb || []).forEach(x => { const r = lk(x.k); r.len[x.v] = (r.len[x.v] || 0) + 1; });
     Object.entries(p.lessonHist || {}).forEach(([k, h]) => { if (h.finished && h.secs) { const r = lk(k); r.times.push(h.secs); r.est = h.est; } }); });
   by(e => e.ev === "lesson_exit" && e.k).forEach(e => { const r = lk(e.k); if (!r.exits.includes(`${e.pg}/${e.of}`)) r.exits.push(`${e.pg}/${e.of}`); });
+  const VS = getStore("visitors"); const V = []; for (const { key: vk } of (await VS.list()).blobs) { const v = await VS.get(vk, { type: "json" }); if (v) V.push(v); }
+  const nV = V.length, visits = V.reduce((a, v) => a + (v.visits || 0), 0), nStart = V.filter(v => v.start).length, nFin = V.filter(v => v.finish).length, nJoin = V.filter(v => v.join).length;
+  const nTriedNoJoin = V.filter(v => v.finish && !v.join).length, nVisitOnly = V.filter(v => !v.start).length;
+  const pc = (x, y) => y ? Math.round(100 * x / y) + "%" : "–";
+  const dayCount = {}; V.forEach(v => (v.days || []).forEach(d => dayCount[d] = (dayCount[d] || 0) + 1));
+  const lastDays = Object.keys(dayCount).sort().slice(-14);
+  const funnel = `<h2>Visitors (all, anonymous)</h2><div class=g>
+  <div class=c><div class=k>${nV}</div>unique visitors</div><div class=c><div class=k>${visits}</div>total visits</div>
+  <div class=c><div class=k>${pc(nStart, nV)}</div>started a lesson (${nStart})</div><div class=c><div class=k>${pc(nFin, nV)}</div>finished a lesson (${nFin})</div>
+  <div class=c><div class=k>${pc(nJoin, nV)}</div>joined the beta (${nJoin})</div><div class=c><div class=k>${pc(nTriedNoJoin, nV)}</div>tried a lesson, didn't join (${nTriedNoJoin})</div>
+  <div class=c><div class=k>${pc(nVisitOnly, nV)}</div>left without starting (${nVisitOnly})</div><div class=c><div class=k>${pc(nJoin, nFin)}</div>of finishers joined</div></div>
+  <p style="color:#8a9a9f">Visitors per day: ${lastDays.map(d => `${d.slice(5)}: ${dayCount[d]}`).join(" · ") || "–"}</p>`;
   const fmt = o => Object.entries(o).map(([k, v]) => `${esc(k.replace("_", " "))}: ${v}`).join(", ") || "–";
   const lessonRows = Object.entries(L).sort((a, b) => (b[1].exits.length - a[1].exits.length) || a[0].localeCompare(b[0])).map(([k, r]) => `<tr><td>${esc(k)}</td><td>${r.started || "–"}</td><td>${r.finished}</td><td>${r.times.length ? fmtT(r.times.reduce((a, b) => a + b, 0) / r.times.length) + (r.est ? ` <span style="color:#8a9a9f">(exp. ${r.est}m)</span>` : "") : "–"}</td><td>${r.exits.join(", ") || "–"}</td><td>${fmt(r.reasons)}</td><td>${fmt(r.len)}</td></tr>`).join("");
   const html = `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Leamly beta results</title>
   <style>body{font-family:system-ui;background:#101E24;color:#F4F3EA;padding:20px;max-width:900px;margin:auto}td,th{padding:6px 10px;border-bottom:1px solid #2a434b;text-align:left}.k{color:#D7F36B;font-size:2rem;font-weight:800}.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}.c{background:#17282f;border-radius:14px;padding:14px}a{color:#D7F36B}</style>
-  <h1>Leamly beta</h1><div class=g>
+  <h1>Leamly beta</h1>${funnel}<div class=g>
   <div class=c><div class=k>${T.length}</div>sign-ups</div><div class=c><div class=k>${T.filter(t => t.consentAnalytics).length}</div>tracking consent</div>
   <div class=c><div class=k>${active3}</div>active on 3+ days</div><div class=c><div class=k>${done.length}</div>lessons finished</div>
   <div class=c><div class=k>${acc}%</div>quiz answers right</div><div class=c><div class=k>${count("offer_view")} / ${count("offer_click")}</div>offer views / clicks</div>
