@@ -28,6 +28,7 @@ export default async (req) => {
     ${row("Why they use Leamly", esc(p.whyAnswered || "–"))}${row("Founding offer", esc(p.offerChosen || "not chosen"))}</table></div>
     <h2>Lessons opened (${Object.keys(p.lessonHist || {}).length})</h2><div class=c><table><tr><th>Lesson</th><th>First opened</th><th>Opens</th><th>Reached page</th><th>Time read</th><th>Finished</th><th>Quiz</th><th>Difficulty</th><th>Length</th><th>Left because</th></tr>
     ${Object.entries(p.lessonHist || {}).sort((a, b) => (a[1].first < b[1].first ? 1 : -1)).map(([k, h]) => `<tr><td>${esc(k)}</td><td>${esc(h.first || "–")}</td><td>${h.opens || 1}</td><td>${h.maxPg || 1}${h.of ? " / " + h.of : ""}</td><td>${fmtT(h.secs)}${h.est ? ` <span class=m>(exp. ${h.est}m)</span>` : ""}${(h.pageSecs || []).filter(x => x).length > 1 ? `<br><span class=m>per page: ${(h.pageSecs || []).slice(0, h.of || 20).map(x => fmtT(x)).join(" · ")}</span>` : ""}</td><td>${h.finished ? "✓ " + esc(h.finishedOn || "") : "✗ no"}</td><td>${h.right != null ? h.right + "/3" : "–"}</td><td>${esc((h.feel || "–").replace("_", " "))}</td><td>${esc(h.len || "–")}</td><td>${esc((h.exit || "–").replace("_", " "))}</td></tr>`).join("") || "<tr><td colspan=10>No lessons opened yet</td></tr>"}</table></div>
+    <h2>Feedback</h2><div class=c>${(await (async () => { const FS = getStore("feedback"); const out = []; for (const { key: fk } of (await FS.list()).blobs) { if (!fk.endsWith("-" + pid)) continue; const f = await FS.get(fk, { type: "json" }); if (f) out.push(f); } return out; })()).map(f => `${esc(f.at.slice(0, 16).replace("T", " "))} · ${esc(f.rating || "–")}${f.lesson ? " · " + esc(f.lesson) : ""}: ${esc(f.text || "")}`).join("<br>") || "–"}</div>
     <h2>Daily lessons finished</h2><div class=c>${days}</div>
     <h2>Ideas collected (${(p.ideas || []).length})</h2><div class=c>${(p.ideas || []).map(i => `${esc(i.k)} · ${esc(i.date)}${i.remembered ? " · remembered" : ""}${i.deep ? " · deep note" : ""}`).join("<br>") || "–"}</div>
     <h2>Kept in orbit (${(p.kept || []).length})</h2><div class=c>${(p.kept || []).map(i => esc(i.id) + " · " + esc(i.date)).join("<br>") || "–"}</div>
@@ -69,6 +70,11 @@ export default async (req) => {
   <div class=c><div class=k>${pc(nJoin, nV)}</div>joined the beta (${nJoin})</div><div class=c><div class=k>${pc(nTriedNoJoin, nV)}</div>tried a lesson, didn't join (${nTriedNoJoin})</div>
   <div class=c><div class=k>${pc(nVisitOnly, nV)}</div>left without starting (${nVisitOnly})</div><div class=c><div class=k>${pc(nJoin, nFin)}</div>of finishers joined</div></div>
   <p style="color:#8a9a9f">Visitors per day: ${lastDays.map(d => `${d.slice(5)}: ${dayCount[d]}`).join(" · ") || "–"}</p>`;
+  const FS = getStore("feedback"); const FB = []; for (const { key: fk } of (await FS.list()).blobs) { const f = await FS.get(fk, { type: "json" }); if (f) FB.push(f); }
+  FB.sort((x, y) => (x.at < y.at ? 1 : -1));
+  const tName = id => { const t = T.find(x => x && x.id === id); return t ? `<a href="?key=${key}&id=${encodeURIComponent(id)}">${esc(t.name || t.email)}</a>` : "anonymous"; };
+  const RL = { love: "Love it", ok: "It's OK", no: "Not for me" };
+  const fbHtml = `<h2>Feedback (${FB.length})</h2>${FB.slice(0, 100).map(f => `<div class=c><b>${esc(RL[f.rating] || "–")}</b> · ${tName(f.id)}${f.name ? " (" + esc(f.name) + ")" : ""} · ${esc(f.at.slice(0, 16).replace("T", " "))}${f.lesson ? " · " + esc(f.lesson) : ""} · ${esc(f.lang || "")}<div>${esc(f.text || "")}</div></div>`).join("") || "<p>–</p>"}`;
   const fmt = o => Object.entries(o).map(([k, v]) => `${esc(k.replace("_", " "))}: ${v}`).join(", ") || "–";
   const lessonRows = Object.entries(L).sort((a, b) => (b[1].exits.length - a[1].exits.length) || a[0].localeCompare(b[0])).map(([k, r]) => `<tr><td>${esc(k)}</td><td>${r.started || "–"}</td><td>${r.finished}</td><td>${r.times.length ? fmtT(r.times.reduce((a, b) => a + b, 0) / r.times.length) + (r.est ? ` <span style="color:#8a9a9f">(exp. ${r.est}m)</span>` : "") : "–"}</td><td>${r.exits.join(", ") || "–"}</td><td>${fmt(r.reasons)}</td><td>${fmt(r.len)}</td></tr>`).join("");
   const html = `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Leamly beta results</title>
@@ -78,6 +84,7 @@ export default async (req) => {
   <div class=c><div class=k>${active3}</div>active on 3+ days</div><div class=c><div class=k>${done.length}</div>lessons finished</div>
   <div class=c><div class=k>${acc}%</div>quiz answers right</div><div class=c><div class=k>${count("offer_view")} / ${count("offer_click")}</div>offer views / clicks</div>
   <div class=c><div class=k>${count("deep_open")}</div>deep dives opened</div><div class=c><div class=k>${count("feedback")}</div>feedback sent</div></div>
+${fbHtml}
   <h2>Why people use Leamly</h2><p>${Object.entries(why).map(([k, v]) => `${esc(k)}: ${v}`).join(" · ") || "–"}</p>
   <h2>Lessons: where people stop and why</h2><p style="color:#8a9a9f">"Left at page" = page where someone left early (e.g. 2/5). Reasons come from the "Leaving this lesson?" question; length from the end-of-lesson question.</p>
   <table><tr><th>Lesson</th><th>Opened*</th><th>Finished</th><th>Avg time (finished)</th><th>Left at page</th><th>Reasons</th><th>Length</th></tr>${lessonRows || "<tr><td colspan=7>–</td></tr>"}</table><p style="color:#8a9a9f">*Opened counts only testers who allow usage sharing.</p>
