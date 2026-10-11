@@ -45,6 +45,16 @@ export default async (req) => {
   const pages = {}; by(e => e.ev === "page").forEach(e => { const k = `${e.pg + 1}/${e.of}`; pages[k] = (pages[k] || 0) + 1; });
   const count = ev => by(e => e.ev === ev).length;
   const why = {}; by(e => e.ev === "why").forEach(e => why[e.answer] = (why[e.answer] || 0) + 1);
+  const P = {}; for (const { key: pk } of (await getStore("profiles").list()).blobs) P[pk] = await getStore("profiles").get(pk, { type: "json" });
+  const L = {}; const lk = k => (L[k] ||= { started: 0, finished: 0, exits: [], reasons: {}, len: {} });
+  by(e => e.ev === "open" && e.k).forEach(e => lk(e.k).started++);
+  Object.values(P).forEach(p => { if (!p) return;
+    Object.values(p.doneDays || {}).forEach(k => lk(k).finished++);
+    (p.exitFb || []).forEach(x => { const r = lk(x.k); r.exits.push(`${x.pg}/${x.of}`); r.reasons[x.reason] = (r.reasons[x.reason] || 0) + 1; });
+    (p.lenFb || []).forEach(x => { const r = lk(x.k); r.len[x.v] = (r.len[x.v] || 0) + 1; }); });
+  by(e => e.ev === "lesson_exit" && e.k).forEach(e => { const r = lk(e.k); if (!r.exits.includes(`${e.pg}/${e.of}`)) r.exits.push(`${e.pg}/${e.of}`); });
+  const fmt = o => Object.entries(o).map(([k, v]) => `${esc(k.replace("_", " "))}: ${v}`).join(", ") || "–";
+  const lessonRows = Object.entries(L).sort((a, b) => (b[1].exits.length - a[1].exits.length) || a[0].localeCompare(b[0])).map(([k, r]) => `<tr><td>${esc(k)}</td><td>${r.started || "–"}</td><td>${r.finished}</td><td>${r.exits.join(", ") || "–"}</td><td>${fmt(r.reasons)}</td><td>${fmt(r.len)}</td></tr>`).join("");
   const html = `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Leamly beta results</title>
   <style>body{font-family:system-ui;background:#101E24;color:#F4F3EA;padding:20px;max-width:900px;margin:auto}td,th{padding:6px 10px;border-bottom:1px solid #2a434b;text-align:left}.k{color:#D7F36B;font-size:2rem;font-weight:800}.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}.c{background:#17282f;border-radius:14px;padding:14px}a{color:#D7F36B}</style>
   <h1>Leamly beta</h1><div class=g>
@@ -53,6 +63,8 @@ export default async (req) => {
   <div class=c><div class=k>${acc}%</div>quiz answers right</div><div class=c><div class=k>${count("offer_view")} / ${count("offer_click")}</div>offer views / clicks</div>
   <div class=c><div class=k>${count("deep_open")}</div>deep dives opened</div><div class=c><div class=k>${count("feedback")}</div>feedback sent</div></div>
   <h2>Why people use Leamly</h2><p>${Object.entries(why).map(([k, v]) => `${esc(k)}: ${v}`).join(" · ") || "–"}</p>
+  <h2>Lessons: where people stop and why</h2><p style="color:#8a9a9f">"Left at page" = page where someone left early (e.g. 2/5). Reasons come from the "Leaving this lesson?" question; length from the end-of-lesson question.</p>
+  <table><tr><th>Lesson</th><th>Opened*</th><th>Finished</th><th>Left at page</th><th>Reasons</th><th>Length</th></tr>${lessonRows || "<tr><td colspan=6>–</td></tr>"}</table><p style="color:#8a9a9f">*Opened counts only testers who allow usage sharing.</p>
   <h2>Page reached (page/total : count)</h2><p>${Object.entries(pages).sort().map(([k, v]) => `${k}: ${v}`).join(" · ") || "–"}</p>
   <h2>Testers</h2><table><tr><th>Name</th><th>Email</th><th>Lang</th><th>Source</th><th>Interests (level)</th><th>Lessons done</th><th>Ideas</th><th>Last seen</th><th>Next lesson</th><th>Days active</th></tr>
   ${T.map(t => `<tr><td><a href="?key=${key}&id=${encodeURIComponent(t.id)}">${esc(t.name || "(no name)")}</a></td><td>${esc(t.email)}</td><td>${t.lang}</td><td>${esc(t.source)}</td><td>${(t.interests || []).map(i => `${esc(i)} (${(t.levels || {})[i] ?? "–"})`).join(", ")}</td><td>${t.lessonsDone ?? done.filter(e => e.tid === t.id).length}</td><td>${t.ideas ?? "–"}</td><td>${esc((t.lastSeen || t.createdAt || "").slice(0, 16).replace("T", " "))}</td><td>${esc(t.next?.key || "–")}</td><td>${days[t.id]?.size || 0}</td></tr>`).join("")}</table>
