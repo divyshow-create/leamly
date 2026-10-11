@@ -31,8 +31,8 @@ export default async (req) => {
   <div class=c><div class=k>${count("deep_open")}</div>deep dives opened</div><div class=c><div class=k>${count("feedback")}</div>feedback sent</div></div>
   <h2>Why people use Leamly</h2><p>${Object.entries(why).map(([k, v]) => `${esc(k)}: ${v}`).join(" · ") || "–"}</p>
   <h2>Page reached (page/total : count)</h2><p>${Object.entries(pages).sort().map(([k, v]) => `${k}: ${v}`).join(" · ") || "–"}</p>
-  <h2>Testers</h2><table><tr><th>Name</th><th>Email</th><th>Lang</th><th>Source</th><th>Days active</th><th>Finished</th></tr>
-  ${T.map(t => `<tr><td>${esc(t.name)}</td><td>${esc(t.email)}</td><td>${t.lang}</td><td>${esc(t.source)}</td><td>${days[t.id]?.size || 0}</td><td>${done.filter(e => e.tid === t.id).length}</td></tr>`).join("")}</table>
+  <h2>Testers</h2><table><tr><th>Name</th><th>Email</th><th>Lang</th><th>Source</th><th>Interests (level)</th><th>Lessons done</th><th>Ideas</th><th>Last seen</th><th>Next lesson</th><th>Days active</th></tr>
+  ${T.map(t => `<tr><td>${esc(t.name)}</td><td>${esc(t.email)}</td><td>${t.lang}</td><td>${esc(t.source)}</td><td>${(t.interests || []).map(i => `${esc(i)} (${(t.levels || {})[i] ?? "–"})`).join(", ")}</td><td>${t.lessonsDone ?? done.filter(e => e.tid === t.id).length}</td><td>${t.ideas ?? "–"}</td><td>${esc((t.lastSeen || t.createdAt || "").slice(0, 16).replace("T", " "))}</td><td>${esc(t.next?.key || "–")}</td><td>${days[t.id]?.size || 0}</td></tr>`).join("")}</table>
   <p><a href="?key=${encodeURIComponent(u.searchParams.get("key"))}&csv=events">Download events CSV</a> · <a href="?key=${encodeURIComponent(u.searchParams.get("key"))}&csv=testers">Download testers CSV</a></p>`;
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } });
 };
