@@ -1,5 +1,5 @@
 // Scheduled every day at 05:55 UTC (07:55 Spain/Italy summer time). Env: SITE_URL + Brevo or Resend vars (see lib/mail.mjs)
-import { testers } from "../lib/store.mjs";
+import { st, testers } from "../lib/store.mjs";
 import { sendMail, mailReady, shell, btn } from "../lib/mail.mjs";
 const TXT = {
   en: { s: "Your Leamly discovery for today is ready", b: "One idea, a few minutes, then you're done.", c: "Open today's lesson", u: "Unsubscribe", t: "Today" },

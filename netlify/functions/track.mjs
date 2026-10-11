@@ -1,5 +1,5 @@
 // POST /api/track {testerId, events:[{t,day,ev,...}]}  — stored only if the tester consented to analytics
-import { testers, events, json, validId } from "../lib/store.mjs";
+import { events, json, testers, validId } from "../lib/store.mjs";
 export default async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
   let b; try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }

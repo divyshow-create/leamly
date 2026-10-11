@@ -1,7 +1,6 @@
 // GET /api/admin?key=ADMIN_KEY            -> dashboard
 // GET /api/admin?key=ADMIN_KEY&csv=events -> all events as CSV ; &csv=testers -> testers as CSV
-import { testers, events } from "../lib/store.mjs";
-import { getStore } from "@netlify/blobs";
+import { events, st, testers } from "../lib/store.mjs";
 const fmtT = x => { if (!x) return "–"; const m = Math.floor(x / 60), sec = Math.round(x % 60); return m ? `${m}m ${sec}s` : `${sec}s`; };
 const esc = s => String(s ?? "").replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 export default async (req) => {
@@ -15,7 +14,7 @@ export default async (req) => {
   const pid = u.searchParams.get("id");
   if (pid) {
     const t = T.find(x => x && x.id === pid); if (!t) return new Response("Not found", { status: 404 });
-    const p = (await getStore("profiles").get(pid, { type: "json" })) || {};
+    const p = (await st("profiles").get(pid, { type: "json" })) || {};
     const evs = E.filter(e => e.tid === pid).sort((a, b) => (a.t < b.t ? 1 : -1));
     const row = (k, v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
     const days = Object.entries(p.doneDays || {}).sort().map(([d, k]) => `${d}: ${esc(k)}`).join("<br>") || "–";
@@ -28,7 +27,7 @@ export default async (req) => {
     ${row("Why they use Leamly", esc(p.whyAnswered || "–"))}${row("Founding offer", esc(p.offerChosen || "not chosen"))}</table></div>
     <h2>Lessons opened (${Object.keys(p.lessonHist || {}).length})</h2><div class=c><table><tr><th>Lesson</th><th>First opened</th><th>Opens</th><th>Reached page</th><th>Time read</th><th>Finished</th><th>Quiz</th><th>Difficulty</th><th>Length</th><th>Left because</th></tr>
     ${Object.entries(p.lessonHist || {}).sort((a, b) => (a[1].first < b[1].first ? 1 : -1)).map(([k, h]) => `<tr><td>${esc(k)}</td><td>${esc(h.first || "–")}</td><td>${h.opens || 1}</td><td>${h.maxPg || 1}${h.of ? " / " + h.of : ""}</td><td>${fmtT(h.secs)}${h.est ? ` <span class=m>(exp. ${h.est}m)</span>` : ""}${(h.pageSecs || []).filter(x => x).length > 1 ? `<br><span class=m>per page: ${(h.pageSecs || []).slice(0, h.of || 20).map(x => fmtT(x)).join(" · ")}</span>` : ""}</td><td>${h.finished ? "✓ " + esc(h.finishedOn || "") : "✗ no"}</td><td>${h.right != null ? h.right + "/3" : "–"}</td><td>${esc((h.feel || "–").replace("_", " "))}</td><td>${esc(h.len || "–")}</td><td>${esc((h.exit || "–").replace("_", " "))}</td></tr>`).join("") || "<tr><td colspan=10>No lessons opened yet</td></tr>"}</table></div>
-    <h2>Feedback</h2><div class=c>${(await (async () => { const FS = getStore("feedback"); const out = []; for (const { key: fk } of (await FS.list()).blobs) { if (!fk.endsWith("-" + pid)) continue; const f = await FS.get(fk, { type: "json" }); if (f) out.push(f); } return out; })()).map(f => `${esc(f.at.slice(0, 16).replace("T", " "))} · ${esc(f.rating || "–")}${f.lesson ? " · " + esc(f.lesson) : ""}: ${esc(f.text || "")}`).join("<br>") || "–"}</div>
+    <h2>Feedback</h2><div class=c>${(await (async () => { const FS = st("feedback"); const out = []; for (const { key: fk } of (await FS.list()).blobs) { if (!fk.endsWith("-" + pid)) continue; const f = await FS.get(fk, { type: "json" }); if (f) out.push(f); } return out; })()).map(f => `${esc((f.at || "").slice(0, 16).replace("T", " "))} · ${esc(f.rating || "–")}${f.lesson ? " · " + esc(f.lesson) : ""}: ${esc(f.text || "")}`).join("<br>") || "–"}</div>
     <h2>Daily lessons finished</h2><div class=c>${days}</div>
     <h2>Ideas collected (${(p.ideas || []).length})</h2><div class=c>${(p.ideas || []).map(i => `${esc(i.k)} · ${esc(i.date)}${i.remembered ? " · remembered" : ""}${i.deep ? " · deep note" : ""}`).join("<br>") || "–"}</div>
     <h2>Kept in orbit (${(p.kept || []).length})</h2><div class=c>${(p.kept || []).map(i => esc(i.id) + " · " + esc(i.date)).join("<br>") || "–"}</div>
@@ -49,7 +48,7 @@ export default async (req) => {
   const pages = {}; by(e => e.ev === "page").forEach(e => { const k = `${e.pg + 1}/${e.of}`; pages[k] = (pages[k] || 0) + 1; });
   const count = ev => by(e => e.ev === ev).length;
   const why = {}; by(e => e.ev === "why").forEach(e => why[e.answer] = (why[e.answer] || 0) + 1);
-  const P = {}; for (const { key: pk } of (await getStore("profiles").list()).blobs) P[pk] = await getStore("profiles").get(pk, { type: "json" });
+  const P = {}; for (const { key: pk } of (await st("profiles").list()).blobs) P[pk] = await st("profiles").get(pk, { type: "json" });
   const L = {}; const lk = k => (L[k] ||= { started: 0, finished: 0, exits: [], reasons: {}, len: {}, times: [] });
   by(e => e.ev === "open" && e.k).forEach(e => lk(e.k).started++);
   Object.values(P).forEach(p => { if (!p) return;
@@ -58,7 +57,7 @@ export default async (req) => {
     (p.lenFb || []).forEach(x => { const r = lk(x.k); r.len[x.v] = (r.len[x.v] || 0) + 1; });
     Object.entries(p.lessonHist || {}).forEach(([k, h]) => { if (h.finished && h.secs) { const r = lk(k); r.times.push(h.secs); r.est = h.est; } }); });
   by(e => e.ev === "lesson_exit" && e.k).forEach(e => { const r = lk(e.k); if (!r.exits.includes(`${e.pg}/${e.of}`)) r.exits.push(`${e.pg}/${e.of}`); });
-  const VS = getStore("visitors"); const V = []; for (const { key: vk } of (await VS.list()).blobs) { const v = await VS.get(vk, { type: "json" }); if (v) V.push(v); }
+  const VS = st("visitors"); const V = []; for (const { key: vk } of (await VS.list()).blobs) { const v = await VS.get(vk, { type: "json" }); if (v) V.push(v); }
   const nV = V.length, visits = V.reduce((a, v) => a + (v.visits || 0), 0), nStart = V.filter(v => v.start).length, nFin = V.filter(v => v.finish).length, nJoin = V.filter(v => v.join).length;
   const nTriedNoJoin = V.filter(v => v.finish && !v.join).length, nVisitOnly = V.filter(v => !v.start).length;
   const pc = (x, y) => y ? Math.round(100 * x / y) + "%" : "–";
@@ -70,11 +69,11 @@ export default async (req) => {
   <div class=c><div class=k>${pc(nJoin, nV)}</div>joined the beta (${nJoin})</div><div class=c><div class=k>${pc(nTriedNoJoin, nV)}</div>tried a lesson, didn't join (${nTriedNoJoin})</div>
   <div class=c><div class=k>${pc(nVisitOnly, nV)}</div>left without starting (${nVisitOnly})</div><div class=c><div class=k>${pc(nJoin, nFin)}</div>of finishers joined</div></div>
   <p style="color:#8a9a9f">Visitors per day: ${lastDays.map(d => `${d.slice(5)}: ${dayCount[d]}`).join(" · ") || "–"}</p>`;
-  const FS = getStore("feedback"); const FB = []; for (const { key: fk } of (await FS.list()).blobs) { const f = await FS.get(fk, { type: "json" }); if (f) FB.push(f); }
+  const FS = st("feedback"); const FB = []; for (const { key: fk } of (await FS.list()).blobs) { const f = await FS.get(fk, { type: "json" }); if (f) FB.push(f); }
   FB.sort((x, y) => (x.at < y.at ? 1 : -1));
   const tName = id => { const t = T.find(x => x && x.id === id); return t ? `<a href="?key=${key}&id=${encodeURIComponent(id)}">${esc(t.name || t.email)}</a>` : "anonymous"; };
   const RL = { love: "Love it", ok: "It's OK", no: "Not for me" };
-  const fbHtml = `<h2>Feedback (${FB.length})</h2>${FB.slice(0, 100).map(f => `<div class=c><b>${esc(RL[f.rating] || "–")}</b> · ${tName(f.id)}${f.name ? " (" + esc(f.name) + ")" : ""} · ${esc(f.at.slice(0, 16).replace("T", " "))}${f.lesson ? " · " + esc(f.lesson) : ""} · ${esc(f.lang || "")}<div>${esc(f.text || "")}</div></div>`).join("") || "<p>–</p>"}`;
+  const fbHtml = `<h2>Feedback (${FB.length})</h2>${FB.slice(0, 100).map(f => `<div class=c><b>${esc(RL[f.rating] || "–")}</b> · ${tName(f.id)}${f.name ? " (" + esc(f.name) + ")" : ""} · ${esc((f.at || "").slice(0, 16).replace("T", " "))}${f.lesson ? " · " + esc(f.lesson) : ""} · ${esc(f.lang || "")}<div>${esc(f.text || "")}</div></div>`).join("") || "<p>–</p>"}`;
   const fmt = o => Object.entries(o).map(([k, v]) => `${esc(k.replace("_", " "))}: ${v}`).join(", ") || "–";
   const lessonRows = Object.entries(L).sort((a, b) => (b[1].exits.length - a[1].exits.length) || a[0].localeCompare(b[0])).map(([k, r]) => `<tr><td>${esc(k)}</td><td>${r.started || "–"}</td><td>${r.finished}</td><td>${r.times.length ? fmtT(r.times.reduce((a, b) => a + b, 0) / r.times.length) + (r.est ? ` <span style="color:#8a9a9f">(exp. ${r.est}m)</span>` : "") : "–"}</td><td>${r.exits.join(", ") || "–"}</td><td>${fmt(r.reasons)}</td><td>${fmt(r.len)}</td></tr>`).join("");
   const html = `<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Leamly beta results</title>

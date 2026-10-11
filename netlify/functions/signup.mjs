@@ -1,5 +1,5 @@
 // POST /api/signup  {testerId,email,name,lang,consentEmail,consentAnalytics,source,interests,levels}
-import { testers, json, clean, validId } from "../lib/store.mjs";
+import { clean, json, st, testers, validId } from "../lib/store.mjs";
 import { sendMail, mailReady, shell, btn } from "../lib/mail.mjs";
 const W = {
   en: { s: "You're in: welcome to the Leamly beta", h: "You're in!", b: "Thanks for joining the Leamly beta. From tomorrow, every morning at 07:55 you'll get the link to your daily discovery: one idea, a few minutes, then you're done.", c: "Open Leamly", u: "Unsubscribe" },
@@ -16,7 +16,7 @@ export default async (req) => {
   const t = { ...prev, id: b.testerId, email, name: clean(b.name, 80), lang: ["en","it","es"].includes(b.lang) ? b.lang : "en",
     consentEmail: !!b.consentEmail, consentAnalytics: !!b.consentAnalytics, source: clean(b.source, 40),
     interests: Array.isArray(b.interests) ? b.interests.slice(0, 20).map(x => clean(x, 30)) : [], levels: typeof b.levels === "object" ? b.levels : {},
-    createdAt: prev.createdAt || now, updatedAt: now, unsubscribed: false };
+    createdAt: prev.createdAt || now, updatedAt: now, unsubscribed: false, privacyVersion: clean(b.privacyVersion, 20), consentAt: now };
   let welcome = false;
   if (!prev.welcomeSent && mailReady() && process.env.SITE_URL) {
     const L = W[t.lang] || W.en, site = process.env.SITE_URL;
