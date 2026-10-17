@@ -1,11 +1,11 @@
 // POST /api/report {id, kind, ref, title, page, reasons[], text, lang, screen} -> stored in "reports", shown on the admin page
 import { clean, json, st, validId } from "../lib/store.mjs";
-const OK = ["fact", "graphic", "read", "lang", "unclear", "other"];
+const OK = ["fact", "graphic", "read", "lang", "unclear", "spoiler", "source", "other"];
 export default async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
   let b; try { b = JSON.parse(await req.text()); } catch { return json({ error: "bad json" }, 400); }
   const id = validId(b.id) ? b.id : "anon";
-  const reasons = Array.isArray(b.reasons) ? b.reasons.filter(r => OK.includes(r)).slice(0, 6) : [];
+  const reasons = Array.isArray(b.reasons) ? b.reasons.filter(r => OK.includes(r)).slice(0, 8) : [];
   const text = clean(b.text, 1500).trim();
   if (!reasons.length && !text) return json({ error: "empty" }, 400);
   const at = new Date().toISOString();

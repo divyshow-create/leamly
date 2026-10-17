@@ -78,7 +78,7 @@ export default async (req) => {
   const RL = { love: "Love it", ok: "It's OK", no: "Not for me" };
   const REP = []; for (const { key: rk } of (await RS.list()).blobs) { const r = await RS.get(rk, { type: "json" }); if (r) REP.push({ ...r, rk }); }
   REP.sort((x, y) => (x.status === y.status ? (x.at < y.at ? 1 : -1) : x.status === "open" ? -1 : 1));
-  const RR = { fact: "Wrong / outdated fact", graphic: "Graphic or interactive broken", read: "Hard to read", lang: "Typo / translation", unclear: "Confusing / too short", other: "Something else" };
+  const RR = { fact: "Wrong / outdated fact", graphic: "Graphic or interactive broken", read: "Hard to read", lang: "Typo / translation", unclear: "Confusing / too short", spoiler: "Gives away a quiz answer", source: "Source missing / broken", other: "Something else" };
   const KN = { lesson: "Lesson", flash: "Flash card", ix: "Interactive lesson" };
   const openN = REP.filter(r => r.status !== "done").length;
   const byItem = {}; REP.filter(r => r.status !== "done").forEach(r => { const k = (KN[r.kind] || r.kind) + " · " + r.ref; byItem[k] = (byItem[k] || 0) + 1; });
