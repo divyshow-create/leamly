@@ -1,16 +1,18 @@
 // POST /api/signup  {testerId,email,name,lang,consentEmail,consentAnalytics,source,interests,levels}
-import { clean, json, st, testers, validId } from "../lib/store.mjs";
+import { clean, json, st, testers, validId, findByEmail } from "../lib/store.mjs";
 import { sendMail, mailReady, shell, btn } from "../lib/mail.mjs";
 const W = {
-  en: { s: "You're in: welcome to the Leamly beta", h: "You're in!", b: "Thanks for joining the Leamly beta. From tomorrow, every morning at 07:55 you'll get the link to your daily discovery: one idea, a few minutes, then you're done.", c: "Open Leamly", u: "Unsubscribe" },
-  it: { s: "Ci sei: benvenuto nella beta di Leamly", h: "Ci sei!", b: "Grazie per esserti unito alla beta di Leamly. Da domani, ogni mattina alle 07:55 riceverai il link alla tua scoperta del giorno: un'idea, pochi minuti, e hai finito.", c: "Apri Leamly", u: "Disiscriviti" },
-  es: { s: "Ya estás dentro: bienvenido a la beta de Leamly", h: "¡Ya estás dentro!", b: "Gracias por unirte a la beta de Leamly. Desde mañana, cada día a las 07:55 recibirás el enlace a tu descubrimiento del día: una idea, unos minutos y listo.", c: "Abrir Leamly", u: "Darse de baja" } };
+  en: { s: "You're in: welcome to the Leamly beta", h: "You're in!", b: "Thanks for joining the Leamly beta. From tomorrow, every morning at 07:55 you'll get the link to your daily discovery: one curiosity, a few minutes, then you're done.", c: "Open Leamly", u: "Unsubscribe" },
+  it: { s: "Ci sei: benvenuto nella beta di Leamly", h: "Ci sei!", b: "Grazie per esserti unito alla beta di Leamly. Da domani, ogni mattina alle 07:55 riceverai il link alla tua scoperta del giorno: una curiosità, pochi minuti, e hai finito.", c: "Apri Leamly", u: "Disiscriviti" },
+  es: { s: "Ya estás dentro: bienvenido a la beta de Leamly", h: "¡Ya estás dentro!", b: "Gracias por unirte a la beta de Leamly. Desde mañana, cada día a las 07:55 recibirás el enlace a tu descubrimiento del día: una curiosidad, unos minutos y listo.", c: "Abrir Leamly", u: "Darse de baja" } };
 export default async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
   let b; try { b = await req.json(); } catch { return json({ error: "bad json" }, 400); }
   if (!validId(b.testerId)) return json({ error: "bad id" }, 400);
   const email = clean(b.email, 200).trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "bad email" }, 400);
+  const other = await findByEmail(email);
+  if (other && other.id !== b.testerId) return json({ error: "exists" }, 409);   // one account per email: they should log in instead
   const store = testers(); const prev = (await store.get(b.testerId, { type: "json" })) || {};
   const now = new Date().toISOString();
   const t = { ...prev, id: b.testerId, email, name: clean(b.name, 80), lang: ["en","it","es"].includes(b.lang) ? b.lang : "en",
