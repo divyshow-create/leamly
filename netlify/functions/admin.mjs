@@ -11,6 +11,9 @@ export default async (req) => {
   const E = []; for (const { key } of (await es.list()).blobs) { const arr = await es.get(key, { type: "json" }) || []; const tid = key.split("/")[0]; arr.forEach(e => E.push({ tid, ...e })); }
   const key = encodeURIComponent(u.searchParams.get("key"));
   const css = `<style>body{font-family:system-ui;background:#101E24;color:#F4F3EA;padding:20px;max-width:900px;margin:auto}td,th{padding:6px 10px;border-bottom:1px solid #2a434b;text-align:left;vertical-align:top}a{color:#D7F36B}.c{background:#17282f;border-radius:14px;padding:14px;margin:10px 0}.m{color:#8a9a9f}</style>`;
+  const RS = st("reports");
+  const resolveKey = u.searchParams.get("resolve");
+  if (resolveKey) { const r = await RS.get(resolveKey, { type: "json" }); if (r) { r.status = r.status === "done" ? "open" : "done"; await RS.setJSON(resolveKey, r); } return new Response(null, { status: 302, headers: { location: `?key=${key}#reports` } }); }
   const pid = u.searchParams.get("id");
   if (pid) {
     const t = T.find(x => x && x.id === pid); if (!t) return new Response("Not found", { status: 404 });
@@ -73,6 +76,19 @@ export default async (req) => {
   FB.sort((x, y) => (x.at < y.at ? 1 : -1));
   const tName = id => { const t = T.find(x => x && x.id === id); return t ? `<a href="?key=${key}&id=${encodeURIComponent(id)}">${esc(t.name || t.email)}</a>` : "anonymous"; };
   const RL = { love: "Love it", ok: "It's OK", no: "Not for me" };
+  const REP = []; for (const { key: rk } of (await RS.list()).blobs) { const r = await RS.get(rk, { type: "json" }); if (r) REP.push({ ...r, rk }); }
+  REP.sort((x, y) => (x.status === y.status ? (x.at < y.at ? 1 : -1) : x.status === "open" ? -1 : 1));
+  const RR = { fact: "Wrong / outdated fact", graphic: "Graphic or interactive broken", read: "Hard to read", lang: "Typo / translation", unclear: "Confusing / too short", other: "Something else" };
+  const KN = { lesson: "Lesson", flash: "Flash card", ix: "Interactive lesson" };
+  const openN = REP.filter(r => r.status !== "done").length;
+  const byItem = {}; REP.filter(r => r.status !== "done").forEach(r => { const k = (KN[r.kind] || r.kind) + " · " + r.ref; byItem[k] = (byItem[k] || 0) + 1; });
+  const repHtml = `<h2 id="reports">Reports (${openN} open, ${REP.length} total)</h2>
+  ${Object.keys(byItem).length ? `<p style="color:#8a9a9f">Most reported: ${Object.entries(byItem).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, n]) => `${esc(k)} (${n})`).join(" · ")}</p>` : ""}
+  ${REP.slice(0, 200).map(r => `<div class=c style="${r.status === "done" ? "opacity:.5" : ""}"><b>${esc(KN[r.kind] || r.kind)}</b> · ${esc(r.ref)}${r.page ? " · page " + r.page : ""} · ${esc(r.lang || "")} · ${esc((r.at || "").slice(0, 16).replace("T", " "))} · ${r.id && r.id !== "anon" ? tName(r.id) : "anonymous"}
+   <div style="margin:6px 0"><i>${esc(r.title || "")}</i></div>
+   <div>${(r.reasons || []).map(x => `<span style="display:inline-block;background:#2a434b;border-radius:99px;padding:2px 9px;margin:2px 4px 2px 0;font-size:.85em">${esc(RR[x] || x)}</span>`).join("")}</div>
+   ${r.text ? `<div style="margin-top:6px">“${esc(r.text)}”</div>` : ""}
+   <div style="margin-top:8px"><a href="?key=${key}&resolve=${encodeURIComponent(r.rk)}">${r.status === "done" ? "Reopen" : "Mark as fixed"}</a></div></div>`).join("") || "<p>No reports yet.</p>"}`;
   const fbHtml = `<h2>Feedback (${FB.length})</h2>${FB.slice(0, 100).map(f => `<div class=c><b>${esc(RL[f.rating] || "–")}</b> · ${tName(f.id)}${f.name ? " (" + esc(f.name) + ")" : ""} · ${esc((f.at || "").slice(0, 16).replace("T", " "))}${f.lesson ? " · " + esc(f.lesson) : ""} · ${esc(f.lang || "")}<div>${esc(f.text || "")}</div></div>`).join("") || "<p>–</p>"}`;
   const fmt = o => Object.entries(o).map(([k, v]) => `${esc(k.replace("_", " "))}: ${v}`).join(", ") || "–";
   const lessonRows = Object.entries(L).sort((a, b) => (b[1].exits.length - a[1].exits.length) || a[0].localeCompare(b[0])).map(([k, r]) => `<tr><td>${esc(k)}</td><td>${r.started || "–"}</td><td>${r.finished}</td><td>${r.times.length ? fmtT(r.times.reduce((a, b) => a + b, 0) / r.times.length) + (r.est ? ` <span style="color:#8a9a9f">(exp. ${r.est}m)</span>` : "") : "–"}</td><td>${r.exits.join(", ") || "–"}</td><td>${fmt(r.reasons)}</td><td>${fmt(r.len)}</td></tr>`).join("");
@@ -107,6 +123,7 @@ export default async (req) => {
   <div class=c><div class=k>${acc}%</div>quiz answers right</div><div class=c><div class=k>${count("offer_view")} / ${count("offer_click")}</div>offer views / clicks</div>
   <div class=c><div class=k>${count("deep_open")}</div>deep dives opened</div><div class=c><div class=k>${count("feedback")}</div>feedback sent</div></div>
 ${lessonRank}
+${repHtml}
 ${fbHtml}
   <h2>Why people use Leamly</h2><p>${Object.entries(why).map(([k, v]) => `${esc(k)}: ${v}`).join(" · ") || "–"}</p>
   <h2>Lessons: where people stop and why</h2><p style="color:#8a9a9f">"Left at page" = page where someone left early (e.g. 2/5). Reasons come from the "Leaving this lesson?" question; length from the end-of-lesson question.</p>
