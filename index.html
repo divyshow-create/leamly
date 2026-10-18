@@ -1008,6 +1008,29 @@ header.top{justify-content:flex-start}header.top .navs{margin-left:auto}
 .fxreel.moved .fxswipe{display:none}
 .fxcard[data-i="0"] .fxin{padding-bottom:64px}
 @media (prefers-reduced-motion:reduce){.fxswipe,.fxswipe .fxarr{animation:none}}
+
+/* converter mode for straight-line family A widgets */
+.famfig .cvhero{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#1D3038;border:1px solid #2A434B;border-radius:16px;padding:14px;margin:6px 0 4px}
+.famfig .cvhero .side{flex:1;min-width:0;text-align:center}
+.famfig .cvhero small{display:block;font:600 .62rem 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;color:#6E8288;margin-bottom:3px;line-height:1.3}
+.famfig .cvhero .in{font:800 1.45rem 'Archivo',system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#F4F3EA}
+.famfig .cvhero .out{font:900 2rem/1.05 'Archivo',system-ui,sans-serif;color:var(--lime);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.famfig .cvhero .u{font-size:.55em;font-weight:700;margin-left:3px;opacity:.85}
+.famfig .cvhero .arr{font:700 1.2rem 'JetBrains Mono',ui-monospace,monospace;color:#6E8288;flex:none}
+.famfig .cvstep{display:flex;align-items:center;gap:10px;margin:12px 0 4px}
+.famfig .cvstep button{flex:none;width:38px;height:38px;border-radius:12px;border:1px solid #2A434B;background:#1D3038;color:#F4F3EA;font:800 1.2rem 'Archivo',system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
+.famfig .cvstep button:active{background:#2A434B}
+.famfig .cvstep input{flex:1;min-width:0;accent-color:var(--lime)}
+.famfig .cvchips{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px;margin-top:12px}
+.famfig .cvchips .chip{background:transparent;border:1px solid #2A434B;border-radius:12px;padding:7px 4px;color:#F4F3EA;cursor:pointer;text-align:center;font:600 .74rem/1.3 'JetBrains Mono',ui-monospace,monospace}
+.famfig .cvchips .chip em{display:block;font-style:normal;color:var(--lime);font-weight:700}
+.famfig .cvchips .chip.on{border-color:var(--lime);background:#26391A}
+.famfig .cvrule{font:600 .78rem 'JetBrains Mono',ui-monospace,monospace;color:#9FB0B4;background:#13242A;border-radius:10px;padding:8px 10px;margin-top:12px}
+.famfig .cvmore .ro b{font-size:1.05rem}
+.famfig .cvsec{font:600 .66rem 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;color:#6E8288;margin:16px 0 0}
+.fxvis .famfig .cvchips,.fxvis .famfig .cvmore,.fxvis .famfig .cvsec,.fxvis .famfig .cvrule{display:none}
+.fxvis .famfig .cvhero{padding:10px;margin:4px 0}.fxvis .famfig .cvhero .out{font-size:1.6rem}.fxvis .famfig .cvhero .in{font-size:1.15rem}
+.fxvis .famfig .cvstep{margin:8px 0 0}.fxvis .famfig .cvstep button{width:34px;height:34px}
 </style>
 <div class="progress" id="prog"><i></i></div>
 <form name="beta-signup" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
@@ -4244,9 +4267,9 @@ Object.assign(IXW,{
 // Data-driven interactive lessons: six reusable widget families (A calc, B order, C sort, D compare, E estimate, F explore).
 // Lessons are added with IXF_ADD([...]) using the JSON format agreed with ChatGPT; every visible string comes from the lesson's own language block.
 const IXF_UI={
- en:{check:'Check',again:'Check again',ok:'All correct',notyet:'Not yet',use:'Use ↑ ↓',up:'Move up',dn:'Move down',reveal:'Reveal the answer',yourGuess:'Your guess',real:'Real value',close:'Close!',off:'Off by',tap:'Tap a part to learn what it does',explored:'explored',sorted:'Sort every item, then check',pick:'Pick a scenario',right:'right'},
- it:{check:'Controlla',again:'Ricontrolla',ok:'Tutto giusto',notyet:'Non ancora',use:'Usa ↑ ↓',up:'Sposta su',dn:'Sposta giù',reveal:'Mostra la risposta',yourGuess:'La tua stima',real:'Valore reale',close:'Ci sei quasi!',off:'Scarto',tap:'Tocca una parte per scoprire cosa fa',explored:'esplorati',sorted:'Smista tutti gli elementi, poi controlla',pick:'Scegli uno scenario',right:'giusti'},
- es:{check:'Comprobar',again:'Comprobar de nuevo',ok:'Todo correcto',notyet:'Todavía no',use:'Usa ↑ ↓',up:'Subir',dn:'Bajar',reveal:'Mostrar la respuesta',yourGuess:'Tu estimación',real:'Valor real',close:'¡Casi!',off:'Diferencia',tap:'Toca una parte para saber qué hace',explored:'explorados',sorted:'Clasifica todos los elementos y comprueba',pick:'Elige un escenario',right:'correctos'}};
+ en:{conv:'Converter',adj:'Adjust assumptions',less:'Less',more:'More',check:'Check',again:'Check again',ok:'All correct',notyet:'Not yet',use:'Use ↑ ↓',up:'Move up',dn:'Move down',reveal:'Reveal the answer',yourGuess:'Your guess',real:'Real value',close:'Close!',off:'Off by',tap:'Tap a part to learn what it does',explored:'explored',sorted:'Sort every item, then check',pick:'Pick a scenario',right:'right'},
+ it:{conv:'Convertitore',adj:'Modifica le ipotesi',less:'Meno',more:'Più',check:'Controlla',again:'Ricontrolla',ok:'Tutto giusto',notyet:'Non ancora',use:'Usa ↑ ↓',up:'Sposta su',dn:'Sposta giù',reveal:'Mostra la risposta',yourGuess:'La tua stima',real:'Valore reale',close:'Ci sei quasi!',off:'Scarto',tap:'Tocca una parte per scoprire cosa fa',explored:'esplorati',sorted:'Smista tutti gli elementi, poi controlla',pick:'Scegli uno scenario',right:'giusti'},
+ es:{conv:'Conversor',adj:'Ajusta los supuestos',less:'Menos',more:'Más',check:'Comprobar',again:'Comprobar de nuevo',ok:'Todo correcto',notyet:'Todavía no',use:'Usa ↑ ↓',up:'Subir',dn:'Bajar',reveal:'Mostrar la respuesta',yourGuess:'Tu estimación',real:'Valor real',close:'¡Casi!',off:'Diferencia',tap:'Toca una parte para saber qué hace',explored:'explorados',sorted:'Clasifica todos los elementos y comprueba',pick:'Elige un escenario',right:'correctos'}};
 const ixfU=()=>IXF_UI[LANG]||IXF_UI.en;
 function IXF_ADD(list){ (list||[]).forEach(L=>{ if(!L||!L.id||IX_LES.some(x=>x.id===L.id)) return;
  IX_LES.push({id:L.id,subj:L.subj,lv:L.lv,min:L.min||4,widget:'fam',family:L.family,icon:L.icon||null});
@@ -4259,8 +4282,36 @@ function ixfExpr(expr,ids){ const ok=new Set([...ids,'sqrt','abs','min','max','l
 const IXF_M=[Math.sqrt,Math.abs,Math.min,Math.max,Math.log,Math.exp,Math.round,Math.PI,d=>Math.sin(d*Math.PI/180),d=>Math.cos(d*Math.PI/180),d=>Math.tan(d*Math.PI/180),Math.floor,Math.ceil];
 function ixfShuffle(n,seed){ const a=[...Array(n).keys()]; let s=seed||7; for(let i=n-1;i>0;i--){ s=(s*9301+49297)%233280; const j=Math.floor(s/233280*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } if(a.every((v,i)=>v===i)&&n>1) a.push(a.shift()); return a; }
 IXW.fam=function(el){ const l=ixL(S.ixId); const W=(ixT()[l.id]||{}).w||{}; const U=ixfU(); const F=IXF_FAM[l.family]; if(!F){ el.innerHTML=''; return; } F(el,W,U,l); };
+// straight-line charts teach nothing: show them as a converter instead (Divy, Oct 2026)
+function ixfLinear(ins,ids,ch){ const xi=ids.indexOf(ch.x), X=ins[xi], v=ins.map(i=>+i.val); const ys=[];
+ for(let s=0;s<=20;s++){ const vv=v.slice(); vv[xi]=X.min+(X.max-X.min)*s/20; ys.push(ch.f(...vv,...IXF_M)); }
+ if(ys.some(y=>!isFinite(y))) return false; const r=Math.max(...ys)-Math.min(...ys); if(r<=0) return false;
+ return ys.every((y,s)=>Math.abs(y-(ys[0]+(ys[20]-ys[0])*s/20))/r<0.02); }
+function ixfNice(X){ const st=+X.step||1, snap=t=>Math.min(X.max,Math.max(X.min,Math.round((t-X.min)/st)*st+X.min)); const out=[+X.min];
+ [1,2].forEach(k=>{ const t=X.min+(X.max-X.min)*k/3; let n=t; if(t>0){ const m=Math.pow(10,Math.floor(Math.log10(t))); n=[1,2,2.5,5,10].map(c=>c*m).reduce((a,b)=>Math.abs(b-t)<Math.abs(a-t)?b:a); } out.push(snap(n)); });
+ out.push(+X.max); return [...new Set(out.map(x=>+x.toFixed(6)))].sort((a,b)=>a-b); }
+function ixfConv(el,W,U,ins,ids,outs,ch){ const xi=ids.indexOf(ch.x), X=ins[xi]; const norm=e=>String(e).replace(/\s/g,'');
+ let hk=outs.findIndex(o=>norm(o.expr)===norm(W.chart.y)); if(hk<0) hk=0; const H=outs[hk]; const rest=ins.filter((_,k)=>k!==xi);
+ const idp=i=>i.step<1?Math.min(6,Math.ceil(-Math.log10(i.step)-1e-9)):0; const odp=o=>o.dp==null?1:o.dp; const u=t=>t?`<span class="u">${esc(t)}</span>`:'';
+ const run=(f,v)=>f(...v,...IXF_M); const chips=ixfNice(X);
+ el.innerHTML=`<div class="head"><b>${esc(W.title||'')}</b><span class="tag">${U.conv}</span></div>
+  <div class="cvhero"><div class="side"><small>${esc(X.label)}</small><span class="in" id="cvi"></span></div><span class="arr">→</span><div class="side"><small>${esc(H.label)}</small><span class="out" id="cvo"></span></div></div>
+  <div class="cvstep"><button type="button" data-cvd="-1" aria-label="${U.less}">−</button><input type="range" id="fx_${X.id}" aria-label="${esc(X.label)}" min="${X.min}" max="${X.max}" step="${X.step}" value="${X.val}"><button type="button" data-cvd="1" aria-label="${U.more}">+</button></div>
+  <div class="cvchips" id="cvc"></div>
+  ${outs.length>1?`<div class="cvmore">${ixRO(outs.map((o,k)=>[esc(o.label),'fo'+k,false]).filter((_,k)=>k!==hk))}</div>`:''}
+  ${W.rule?`<div class="cvrule">${esc(W.rule)}</div>`:''}${W.note?`<p class="lgd">${esc(W.note)}</p>`:''}
+  ${rest.length?`<p class="cvsec">${U.adj}</p>${rest.map(i=>ixCtrl('fx_'+i.id,esc(i.label),i.min,i.max,i.step,i.val)).join('')}`:''}`;
+ const xs=el.querySelector('#fx_'+X.id); const val=()=>ins.map(i=>+el.querySelector('#fx_'+i.id).value);
+ function draw(){ const v=val(); rest.forEach(i=>{ const o=el.querySelector('#fx_'+i.id+'o'); if(o) o.textContent=ixNum(+el.querySelector('#fx_'+i.id).value,idp(i))+(i.unit?' '+i.unit:''); });
+  el.querySelector('#cvi').innerHTML=ixNum(v[xi],idp(X))+u(X.unit); const r=run(H.f,v); el.querySelector('#cvo').innerHTML=isFinite(r)?ixNum(r,odp(H))+u(H.unit):'—';
+  outs.forEach((o,k)=>{ if(k===hk) return; const b=el.querySelector('#fo'+k); if(b){ const q=run(o.f,v); b.textContent=isFinite(q)?ixNum(q,odp(o))+(o.unit?' '+o.unit:''):'—'; } });
+  el.querySelector('#cvc').innerHTML=chips.map(c=>{ const vv=v.slice(); vv[xi]=c; const q=run(H.f,vv); return `<button type="button" class="chip${Math.abs(c-v[xi])<1e-9?' on':''}" data-cvv="${c}">${ixNum(c,idp(X))}${X.unit?' '+esc(X.unit):''}<em>${isFinite(q)?ixNum(q,odp(H))+(H.unit?' '+esc(H.unit):''):'—'}</em></button>`; }).join('');
+  el.querySelectorAll('[data-cvv]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); xs.value=b.dataset.cvv; draw(); }); }
+ el.querySelectorAll('[data-cvd]').forEach(b=>b.onclick=e=>{ e.stopPropagation(); const st=+X.step||1; xs.value=Math.min(X.max,Math.max(X.min,+(+xs.value+st*+b.dataset.cvd).toFixed(6))); draw(); });
+ ins.forEach(i=>el.querySelector('#fx_'+i.id).oninput=draw); draw(); }
 const IXF_FAM={
  A(el,W,U){ const ins=W.inputs||[], ids=ins.map(i=>i.id); const outs=(W.outputs||[]).map(o=>Object.assign({},o,{f:ixfExpr(o.expr,ids)})); const ch=W.chart&&ids.includes(W.chart.x)?{x:W.chart.x,f:ixfExpr(W.chart.y,ids),yl:W.chart.ylabel||''}:null;
+  if(ch&&W.mode!=='chart'&&(W.mode==='conv'||ixfLinear(ins,ids,ch))) return ixfConv(el,W,U,ins,ids,outs,ch);
   el.innerHTML=`<div class="head"><b>${esc(W.title||'')}</b><span class="tag">${ixU().sliders}</span></div>${ch?`<svg class="chart" id="g" viewBox="0 0 340 200" role="img" aria-label="${esc(W.title||'')}"></svg>`:''}
   ${ins.map((i,k)=>ixCtrl('fx_'+i.id,esc(i.label),i.min,i.max,i.step,i.val).replace('class="ctrl"',`class="ctrl${(ch?i.id===ch.x:k===0)?' cx':''}"`)).join('')}${ixRO(outs.map((o,k)=>[esc(o.label),'fo'+k,k===0]))}${W.note?`<p class="lgd">${esc(W.note)}</p>`:''}`;
   const val=()=>ins.map(i=>+el.querySelector('#fx_'+i.id).value); const run=(f,v)=>f(...v,...IXF_M);
